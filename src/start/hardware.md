@@ -38,9 +38,9 @@ We'll start from scratch with a fresh template instance. Refer to the
 [previous section on QEMU] for a refresher on how to do this without
 `cargo-generate`.
 
-[previous section on QEMU]: qemu.md
+[previous section on qemu]: qemu.md
 
-``` text
+```text
 $ cargo generate --git https://github.com/rust-embedded/cortex-m-quickstart
  Project Name: app
  Creating project called `app`...
@@ -51,11 +51,11 @@ $ cd app
 
 Step number one is to set a default compilation target in `.cargo/config.toml`.
 
-``` console
+```console
 tail -n5 .cargo/config.toml
 ```
 
-``` toml
+```toml
 # Pick ONE of these compilation targets
 # target = "thumbv6m-none-eabi"    # Cortex-M0 and Cortex-M0+
 # target = "thumbv7m-none-eabi"    # Cortex-M3
@@ -66,9 +66,9 @@ target = "thumbv7em-none-eabihf" # Cortex-M4F and Cortex-M7F (with FPU)
 We'll use `thumbv7em-none-eabihf` as that covers the Cortex-M4F core.
 
 The second step is to enter the memory region information into the `memory.x`
-file.
+file. A **MEMORY** section will probably already exist in `memory.x` and you should edit it to match the below:
 
-``` text
+```text
 $ cat memory.x
 /* Linker script for the STM32F303VCT6 */
 MEMORY
@@ -78,6 +78,7 @@ MEMORY
   RAM : ORIGIN = 0x20000000, LENGTH = 40K
 }
 ```
+
 > **NOTE**: If you for some reason changed the `memory.x` file after you had made
 > the first build of a specific build target, then do `cargo clean` before
 > `cargo build`, because `cargo build` may not track updates of `memory.x`.
@@ -106,7 +107,7 @@ and inspect the binaries using `cargo-binutils` as you did before. The
 `cortex-m-rt` crate handles all the magic required to get your chip running,
 as helpfully, pretty much all Cortex-M CPUs boot in the same fashion.
 
-``` console
+```console
 cargo build --example hello
 ```
 
@@ -130,11 +131,11 @@ On a terminal run `openocd` to connect to the ST-LINK on the discovery board.
 Run this command from the root of the template; `openocd` will pick up the
 `openocd.cfg` file which indicates which interface file and target file to use.
 
-``` console
+```console
 cat openocd.cfg
 ```
 
-``` text
+```text
 # Sample OpenOCD configuration for the STM32F3DISCOVERY development board
 
 # Depending on the hardware revision you got you'll have to pick ONE of these
@@ -153,7 +154,7 @@ source [find target/stm32f3x.cfg]
 > board during the [verify] section then you should modify the `openocd.cfg`
 > file at this point to use `interface/stlink-v2.cfg`.
 
-``` text
+```text
 $ openocd
 Open On-Chip Debugger 0.10.0
 Licensed under GNU GPL v2
@@ -175,7 +176,7 @@ Info : stm32f3x.cpu: hardware has 6 breakpoints, 4 watchpoints
 
 On another terminal run GDB, also from the root of the template.
 
-``` text
+```text
 gdb-multiarch -q target/thumbv7em-none-eabihf/debug/examples/hello
 ```
 
@@ -185,16 +186,16 @@ on which one you installed in the installation chapter. This could also be
 
 Next connect GDB to OpenOCD, which is waiting for a TCP connection on port 3333.
 
-``` console
+```console
 (gdb) target remote :3333
 Remote debugging using :3333
 0x00000000 in ?? ()
 ```
 
-Now proceed to *flash* (load) the program onto the microcontroller using the
+Now proceed to _flash_ (load) the program onto the microcontroller using the
 `load` command.
 
-``` console
+```console
 (gdb) load
 Loading section .vector_table, size 0x400 lma 0x8000000
 Loading section .text, size 0x1518 lma 0x8000400
@@ -207,7 +208,7 @@ The program is now loaded. This program uses semihosting so before we do any
 semihosting call we have to tell OpenOCD to enable semihosting. You can send
 commands to OpenOCD using the `monitor` command.
 
-``` console
+```console
 (gdb) monitor arm semihosting enable
 semihosting is enabled
 ```
@@ -217,7 +218,7 @@ semihosting is enabled
 Like before we can skip all the way to `main` using a breakpoint and the
 `continue` command.
 
-``` console
+```console
 (gdb) break main
 Breakpoint 1 at 0x8000490: file examples/hello.rs, line 11.
 Note: automatically using hardware breakpoints for read-only addresses.
@@ -232,11 +233,11 @@ Breakpoint 1, hello::__cortex_m_rt_main_trampoline () at examples/hello.rs:11
 > **NOTE** If GDB blocks the terminal instead of hitting the breakpoint after
 > you issue the `continue` command above, you might want to double check that
 > the memory region information in the `memory.x` file is correctly set up
-> for your device (both the starts *and* lengths). 
+> for your device (both the starts _and_ lengths).
 
 Step into the main function with `step`.
 
-``` console
+```console
 (gdb) step
 halted: PC: 0x08000496
 hello::__cortex_m_rt_main () at examples/hello.rs:13
@@ -246,7 +247,7 @@ hello::__cortex_m_rt_main () at examples/hello.rs:13
 After advancing the program with `next` you should see "Hello, world!" printed on the OpenOCD console,
 among other stuff.
 
-``` console
+```console
 $ openocd
 (..)
 Info : halted: PC: 0x08000502
@@ -258,11 +259,12 @@ Info : halted: PC: 0x080004b4
 Info : halted: PC: 0x080004b8
 Info : halted: PC: 0x080004bc
 ```
+
 The message is only displayed once as the program is about to enter the infinite loop defined in line 19: `loop {}`
 
 You can now exit GDB using the `quit` command.
 
-``` console
+```console
 (gdb) quit
 A debugging session is active.
 
@@ -274,11 +276,11 @@ Quit anyway? (y or n)
 Debugging now requires a few more steps so we have packed all those steps into a
 single GDB script named `openocd.gdb`. The file was created during the `cargo generate` step, and should work without any modifications. Let's have a peak:
 
-``` console
+```console
 cat openocd.gdb
 ```
 
-``` text
+```text
 target extended-remote :3333
 
 # print demangled symbols
@@ -301,14 +303,14 @@ Now running `<gdb> -x openocd.gdb target/thumbv7em-none-eabihf/debug/examples/he
 OpenOCD, enable semihosting, load the program and start the process.
 
 Alternatively, you can turn `<gdb> -x openocd.gdb` into a custom runner to make
-`cargo run` build a program *and* start a GDB session. This runner is included
+`cargo run` build a program _and_ start a GDB session. This runner is included
 in `.cargo/config.toml` but it's commented out.
 
-``` console
+```console
 head -n10 .cargo/config.toml
 ```
 
-``` toml
+```toml
 [target.thumbv7m-none-eabi]
 # uncomment this to make `cargo run` execute programs on QEMU
 # runner = "qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -semihosting-config enable=on,target=native -kernel"
@@ -321,7 +323,7 @@ runner = "arm-none-eabi-gdb -x openocd.gdb"
 # runner = "gdb -x openocd.gdb"
 ```
 
-``` text
+```text
 $ cargo run --example hello
 (..)
 Loading section .vector_table, size 0x400 lma 0x8000000

@@ -5,7 +5,7 @@ We have chosen this as our initial target because it [can be emulated](https://w
 so you don't need to fiddle with hardware in this section and we can focus on
 the tooling and the development process.
 
-[LM3S6965]: http://www.ti.com/product/LM3S6965
+[lm3s6965]: http://www.ti.com/product/LM3S6965
 
 **IMPORTANT**
 We'll use the name "app" for the project name in this tutorial.
@@ -19,16 +19,20 @@ We'll use the [`cortex-m-quickstart`] project template to generate a new
 project from it. The created project will contain a barebone application: a good
 starting point for a new embedded rust application. In addition, the project will
 contain an `examples` directory, with several separate applications, highlighting
-some of the key embedded rust functionality. 
+some of the key embedded rust functionality.
 
 [`cortex-m-quickstart`]: https://github.com/rust-embedded/cortex-m-quickstart
 
 ### Using `cargo-generate`
+
 First install cargo-generate
+
 ```console
 cargo install cargo-generate
 ```
+
 Then generate a new project
+
 ```console
 cargo generate --git https://github.com/rust-embedded/cortex-m-quickstart
 ```
@@ -109,7 +113,7 @@ fn main() -> ! {
 This program is a bit different from a standard Rust program so let's take a
 closer look.
 
-`#![no_std]` indicates that this program will *not* link to the standard crate,
+`#![no_std]` indicates that this program will _not_ link to the standard crate,
 `std`. Instead it will link to its subset: the `core` crate.
 
 `#![no_main]` indicates that this program won't use the standard `main`
@@ -129,13 +133,13 @@ that'd be `#[entry]`.
 [entry]: https://docs.rs/cortex-m-rt-macros/latest/cortex_m_rt_macros/attr.entry.html
 [`cortex-m-rt`]: https://crates.io/crates/cortex-m-rt
 
-`fn main() -> !`. Our program will be the *only* process running on the target
+`fn main() -> !`. Our program will be the _only_ process running on the target
 hardware so we don't want it to end! We use a [divergent function](https://doc.rust-lang.org/rust-by-example/fn/diverging.html) (the `-> !`
 bit in the function signature) to ensure at compile time that'll be the case.
 
 ## Cross compiling
 
-The next step is to *cross* compile the program for the Cortex-M3 architecture.
+The next step is to _cross_ compile the program for the Cortex-M3 architecture.
 That's as simple as running `cargo build --target $TRIPLE` if you know what the
 compilation target (`$TRIPLE`) should be. Luckily, the `.cargo/config.toml` in the
 template has the answer:
@@ -157,11 +161,13 @@ To cross compile for the Cortex-M3 architecture we have to use
 `thumbv7m-none-eabi`. That target is not automatically installed when installing
 the Rust toolchain, it would now be a good time to add that target to the toolchain,
 if you haven't done it yet:
-``` console
+
+```console
 rustup target add thumbv7m-none-eabi
 ```
- Since the `thumbv7m-none-eabi` compilation target has been set as the default in 
- your `.cargo/config.toml` file, the two commands below do the same:
+
+Since the `thumbv7m-none-eabi` compilation target has been set as the default in
+your `.cargo/config.toml` file, the two commands below do the same:
 
 ```console
 cargo build --target thumbv7m-none-eabi
@@ -176,16 +182,17 @@ can inspect it using `cargo-binutils`.
 With `cargo-readobj` we can print the ELF headers to confirm that this is an ARM
 binary.
 
-``` console
+```console
 cargo readobj --bin app -- --file-headers
 ```
 
 Note that:
-* `--bin app` is sugar for inspect the binary at `target/$TRIPLE/debug/app`
-* `--bin app` will also (re)compile the binary, if necessary
 
+- `--bin app` is sugar for inspect the binary at `target/$TRIPLE/debug/app`
+- `--bin app` will also (re)compile the binary, if necessary
+- **Note** the results below may differ slightly from your results
 
-``` text
+```text
 ELF Header:
   Magic:   7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00
   Class:                             ELF32
@@ -210,13 +217,13 @@ ELF Header:
 
 `cargo-size` can print the size of the linker sections of the binary.
 
-
 ```console
 cargo size --bin app --release -- -A
 ```
+
 we use `--release` to inspect the optimized version
 
-``` text
+```text
 app  :
 section             size        addr
 .vector_table       1024         0x0
@@ -243,17 +250,17 @@ Total              14570
 > - `.text` contains the program instructions
 > - `.rodata` contains constant values like strings
 > - `.data` contains statically allocated variables whose initial values are
->   *not* zero
+>   _not_ zero
 > - `.bss` also contains statically allocated variables whose initial values
->   *are* zero
-> - `.vector_table` is a *non*-standard section that we use to store the vector
+>   _are_ zero
+> - `.vector_table` is a _non_-standard section that we use to store the vector
 >   (interrupt) table
 > - `.ARM.attributes` and the `.debug_*` sections contain metadata and will
->   *not* be loaded onto the target when flashing the binary.
+>   _not_ be loaded onto the target when flashing the binary.
 
-**IMPORTANT**: ELF files contain metadata like debug information so their *size
-on disk* does *not* accurately reflect the space the program will occupy when
-flashed on a device. *Always* use `cargo-size` to check how big a binary really
+**IMPORTANT**: ELF files contain metadata like debug information so their _size
+on disk_ does _not_ accurately reflect the space the program will occupy when
+flashed on a device. _Always_ use `cargo-size` to check how big a binary really
 is.
 
 `cargo-objdump` can be used to disassemble the binary.
@@ -338,7 +345,7 @@ fn main() -> ! {
 }
 ```
 
-This program uses something called semihosting to print text to the *host*
+This program uses something called semihosting to print text to the _host_
 console. When using real hardware this requires a debug session but when using
 QEMU this Just Works.
 
@@ -362,15 +369,27 @@ qemu-system-arm \
   -kernel target/thumbv7m-none-eabi/debug/examples/hello
 ```
 
+If running the pretty version of the command causes errors, try this one:
+
+```console
+qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -semihosting-config enable=on,target=native -kernel target/thumbv7m-none-eabi/debug/examples/hello
+```
+
 ```text
 Hello, world!
 ```
 
 The command should successfully exit (exit code = 0) after printing the text. On
-*nix you can check that with the following command:
+\*nix you can check that with the following command:
 
 ```console
 echo $?
+```
+
+and on Powershell:
+
+```console
+$LastExitCode
 ```
 
 ```text
@@ -380,7 +399,7 @@ echo $?
 Let's break down that QEMU command:
 
 - `qemu-system-arm`. This is the QEMU emulator. There are a few variants of
-  these QEMU binaries; this one does full *system* emulation of *ARM* machines
+  these QEMU binaries; this one does full _system_ emulation of _ARM_ machines
   hence the name.
 
 - `-cpu cortex-m3`. This tells QEMU to emulate a Cortex-M3 CPU. Specifying the
@@ -433,7 +452,7 @@ Hello, world!
 
 Debugging is critical to embedded development. Let's see how it's done.
 
-Debugging an embedded device involves *remote* debugging as the program that we
+Debugging an embedded device involves _remote_ debugging as the program that we
 want to debug won't be running on the machine that's running the debugger
 program (GDB or LLDB).
 
@@ -490,18 +509,15 @@ Reset () at $REGISTRY/cortex-m-rt-0.6.1/src/lib.rs:473
 473     pub unsafe extern "C" fn Reset() -> ! {
 ```
 
-
 You'll see that the process is halted and that the program counter is pointing
 to a function named `Reset`. That is the reset handler: what Cortex-M cores
 execute upon booting.
 
->  Note that on some setup, instead of displaying the line `Reset () at $REGISTRY/cortex-m-rt-0.6.1/src/lib.rs:473` as shown above, gdb may print some warnings like : 
+> Note that on some setup, instead of displaying the line `Reset () at $REGISTRY/cortex-m-rt-0.6.1/src/lib.rs:473` as shown above, gdb may print some warnings like :
 >
->`core::num::bignum::Big32x40::mul_small () at src/libcore/num/bignum.rs:254`
-> `    src/libcore/num/bignum.rs: No such file or directory.`
-> 
-> That's a known glitch. You can safely ignore those warnings, you're most likely at Reset(). 
-
+> `core::num::bignum::Big32x40::mul_small () at src/libcore/num/bignum.rs:254` > ` src/libcore/num/bignum.rs: No such file or directory.`
+>
+> That's a known glitch. You can safely ignore those warnings, you're most likely at Reset().
 
 This reset handler will eventually call our main function. Let's skip all the
 way there using a breakpoint and the `continue` command. To set the breakpoint, let's first take a look where we would like to break in our code, with the `list` command.
@@ -509,7 +525,8 @@ way there using a breakpoint and the `continue` command. To set the breakpoint, 
 ```console
 list main
 ```
-This will show the source code, from the file examples/hello.rs. 
+
+This will show the source code, from the file examples/hello.rs.
 
 ```text
 6       use panic_halt as _;
@@ -523,11 +540,13 @@ This will show the source code, from the file examples/hello.rs.
 14
 15          // exit QEMU
 ```
+
 We would like to add a breakpoint just before the "Hello, world!", which is on line 13. We do that with the `break` command:
 
 ```console
 break 13
 ```
+
 We can now instruct gdb to run up to our main function, with the `continue` command:
 
 ```console
@@ -544,7 +563,7 @@ Breakpoint 1, hello::__cortex_m_rt_main () at examples\hello.rs:13
 We are now close to the code that prints "Hello, world!". Let's move forward
 using the `next` command.
 
-``` console
+```console
 next
 ```
 
@@ -572,6 +591,6 @@ next
 
 You can now exit the GDB session.
 
-``` console
+```console
 quit
 ```
